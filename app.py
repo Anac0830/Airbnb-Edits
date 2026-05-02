@@ -976,10 +976,14 @@ def process_pdf():
                                     c = span.get('color', 0)
                                     text_color = (((c>>16)&0xFF)/255.0, ((c>>8)&0xFF)/255.0, (c&0xFF)/255.0)
                     extra = max(0, len(new_text) - len(old_text)) * font_size * 0.6
+                    is_bold = new_text.startswith('**') and new_text.endswith('**')
+                    if is_bold:
+                        new_text = new_text[2:-2]
+                    fontname = 'hebo' if is_bold else 'helv'
                     page.draw_rect(fitz.Rect(inst.x0-1, inst.y0-2, inst.x1+extra+5, inst.y1+2),
                                    color=(1,1,1), fill=(1,1,1))
                     page.insert_text((inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
-                                     new_text, fontname='helv', fontsize=font_size, color=text_color)
+                                     new_text, fontname=fontname, fontsize=font_size, color=text_color)
                     total += 1
         if total == 0:
             return jsonify({'error': 'Text not found in PDF. Copy the exact text including $ sign.'}), 404
