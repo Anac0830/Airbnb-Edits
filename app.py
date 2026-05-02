@@ -14,27 +14,7 @@ HTML = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PDF Value Editor</title>
     <style>
-        :root {
-            --pink: #FF385C;
-            --pink-dark: #e0314f;
-            --pink-light: #fff0f2;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-900: #111827;
-            --green: #10b981;
-            --green-light: #ecfdf5;
-            --red: #ef4444;
-            --red-light: #fef2f2;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
-            --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -5px rgba(0,0,0,0.04);
-            --radius: 12px;
-        }
+        :root { --pink: #FF385C; --pink-dark: #e0314f; --pink-light: #fff0f2; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-600: #4b5563; --gray-700: #374151; --gray-900: #111827; --green: #10b981; --green-light: #ecfdf5; --red: #ef4444; --red-light: #fef2f2; --shadow-sm: 0 1px 2px rgba(0,0,0,0.05); --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04); --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -5px rgba(0,0,0,0.04); --radius: 12px; }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
         nav { background: white; border-bottom: 1px solid var(--gray-200); padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
@@ -117,299 +97,52 @@ HTML = """<!DOCTYPE html>
         .big-spin { width: 48px; height: 48px; border: 4px solid var(--gray-200); border-top-color: var(--pink); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
         .spinner-box p { font-size: 15px; font-weight: 600; color: var(--gray-700); }
         .spinner-box small { display: block; font-size: 12px; color: var(--gray-400); margin-top: 4px; }
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 24px; }
-            .row-fields { grid-template-columns: 1fr; }
-            .arrow-icon { display: none; }
-        }
+        @media (max-width: 600px) { .hero h1 { font-size: 24px; } .row-fields { grid-template-columns: 1fr; } .arrow-icon { display: none; } }
     </style>
 </head>
 <body>
-    <nav>
-        <a class="nav-brand" href="/">
-            <div class="nav-logo">📄</div>
-            <div>
-                <div class="nav-title">PDF Value Editor</div>
-                <div class="nav-subtitle">Airbnb & more</div>
-            </div>
-        </a>
-        <span class="nav-badge">✦ Smart Replace</span>
-    </nav>
+    <nav><a class="nav-brand" href="/"><div class="nav-logo">📄</div><div><div class="nav-title">PDF Value Editor</div><div class="nav-subtitle">Airbnb & more</div></div></a><span class="nav-badge">✦ Smart Replace</span></nav>
     <main>
-        <div class="hero">
-            <h1>Edit <span>PDF values</span> without<br>breaking the layout</h1>
-            <p>Upload any PDF, auto-detect money values, replace them precisely and download the edited file.</p>
-        </div>
-
+        <div class="hero"><h1>Edit <span>PDF values</span> without<br>breaking the layout</h1><p>Upload any PDF, auto-detect money values, replace them precisely and download the edited file.</p></div>
         <div class="card">
-            <div class="card-header">
-                <div class="card-icon pink">📤</div>
-                <div>
-                    <div class="card-title">Step 1 — Upload your PDF</div>
-                    <div class="card-desc">Supports any Airbnb reservation PDF or standard PDF</div>
-                </div>
-            </div>
+            <div class="card-header"><div class="card-icon pink">📤</div><div><div class="card-title">Step 1 — Upload your PDF</div><div class="card-desc">Supports any Airbnb reservation PDF or standard PDF</div></div></div>
             <div class="card-body">
-                <div class="upload-zone" id="uploadZone">
-                    <input type="file" id="pdfFile" accept=".pdf" />
-                    <div class="upload-icon">📄</div>
-                    <h3>Drop your PDF here or <span class="browse">browse</span></h3>
-                    <p>Max file size: 50 MB · PDF files only</p>
-                </div>
-                <div class="file-selected" id="fileSelected">
-                    <div class="file-selected-icon">✓</div>
-                    <div>
-                        <div class="file-selected-name" id="fileName">—</div>
-                        <div class="file-selected-size" id="fileSize">—</div>
-                    </div>
-                    <button class="file-change" onclick="resetFile()">Change</button>
-                </div>
-                <button class="btn-scan hidden" id="btnScan" onclick="scanPDF()">
-                    🔍 Auto-detect money values in this PDF
-                </button>
-                <div class="scan-results" id="scanResults">
-                    <div class="scan-label">Values found — click to use</div>
-                    <div class="money-chips" id="moneyChips"></div>
-                </div>
+                <div class="upload-zone" id="uploadZone"><input type="file" id="pdfFile" accept=".pdf" /><div class="upload-icon">📄</div><h3>Drop your PDF here or <span class="browse">browse</span></h3><p>Max file size: 50 MB · PDF files only</p></div>
+                <div class="file-selected" id="fileSelected"><div class="file-selected-icon">✓</div><div><div class="file-selected-name" id="fileName">—</div><div class="file-selected-size" id="fileSize">—</div></div><button class="file-change" onclick="resetFile()">Change</button></div>
+                <button class="btn-scan hidden" id="btnScan" onclick="scanPDF()">🔍 Auto-detect money values in this PDF</button>
+                <div class="scan-results" id="scanResults"><div class="scan-label">Values found — click to use</div><div class="money-chips" id="moneyChips"></div></div>
             </div>
         </div>
-
         <div class="card">
-            <div class="card-header">
-                <div class="card-icon blue">🔄</div>
-                <div>
-                    <div class="card-title">Step 2 — Set your replacements</div>
-                    <div class="card-desc">Paste the exact text to find (case-sensitive)</div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="replacements-list" id="replacementsList"></div>
-                <button class="btn-add-row" onclick="addRow()">+ Add another replacement</button>
-            </div>
+            <div class="card-header"><div class="card-icon blue">🔄</div><div><div class="card-title">Step 2 — Set your replacements</div><div class="card-desc">Paste the exact text to find (case-sensitive)</div></div></div>
+            <div class="card-body"><div class="replacements-list" id="replacementsList"></div><button class="btn-add-row" onclick="addRow()">+ Add another replacement</button></div>
         </div>
-
-        <div class="tips">
-            <div class="tips-title">💡 Tips for best results</div>
-            <ul>
-                <li>Use <strong>Auto-detect</strong> to find money values automatically, then click them to fill the "Find" field.</li>
-                <li>Copy the value <strong>exactly</strong> as it appears in the PDF, including the <code>$</code> sign and commas.</li>
-                <li>For Airbnb PDFs the total usually appears as <code>$1,368.05</code> — match it exactly.</li>
-                <li>The original layout, images and fonts are preserved. Only the target text changes.</li>
-            </ul>
-        </div>
-
+        <div class="tips"><div class="tips-title">💡 Tips for best results</div><ul><li>Use <strong>Auto-detect</strong> to find money values automatically, then click them to fill the "Find" field.</li><li>Copy the value <strong>exactly</strong> as it appears in the PDF, including the <code>$</code> sign and commas.</li><li>For Airbnb PDFs the total usually appears as <code>$1,368.05</code> — match it exactly.</li><li>The original layout, images and fonts are preserved. Only the target text changes.</li></ul></div>
         <div class="card" style="margin-top:20px">
-            <div class="card-header">
-                <div class="card-icon green">⬇️</div>
-                <div>
-                    <div class="card-title">Step 3 — Process & Download</div>
-                    <div class="card-desc">Your edited PDF will download automatically</div>
-                </div>
-            </div>
-            <div class="card-body">
-                <button class="btn-process" id="btnProcess" onclick="processPDF()">
-                    ✦ &nbsp; Edit PDF & Download
-                </button>
-                <div class="status-box" id="statusBox"></div>
-            </div>
+            <div class="card-header"><div class="card-icon green">⬇️</div><div><div class="card-title">Step 3 — Process & Download</div><div class="card-desc">Your edited PDF will download automatically</div></div></div>
+            <div class="card-body"><button class="btn-process" id="btnProcess" onclick="processPDF()">✦ &nbsp; Edit PDF & Download</button><div class="status-box" id="statusBox"></div></div>
         </div>
     </main>
-    <footer>
-        PDF Value Editor · Preserves structure · Works with Airbnb, VRBO and more
-    </footer>
-
-    <div class="spinner-overlay" id="spinnerOverlay">
-        <div class="spinner-box">
-            <div class="big-spin"></div>
-            <p>Editing your PDF…</p>
-            <small>This usually takes just a second</small>
-        </div>
-    </div>
-
+    <footer>PDF Value Editor · Preserves structure · Works with Airbnb, VRBO and more</footer>
+    <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner-box"><div class="big-spin"></div><p>Editing your PDF…</p><small>This usually takes just a second</small></div></div>
     <script>
-        let selectedFile = null;
-        let rowCounter = 0;
-        
-        const uploadZone = document.getElementById('uploadZone');
-        const pdfFileInput = document.getElementById('pdfFile');
-        
-        pdfFileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) handleFile(e.target.files[0]);
-        });
-        
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('drag-over');
-        });
-        
+        let selectedFile = null; let rowCounter = 0;
+        const uploadZone = document.getElementById('uploadZone'); const pdfFileInput = document.getElementById('pdfFile');
+        pdfFileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
         uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-        
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type === 'application/pdf') handleFile(file);
-        });
-        
-        function handleFile(file) {
-            selectedFile = file;
-            document.getElementById('uploadZone').style.display = 'none';
-            document.getElementById('fileSelected').classList.add('show');
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = formatBytes(file.size);
-            document.getElementById('btnScan').classList.remove('hidden');
-            document.getElementById('scanResults').classList.remove('show');
-            document.getElementById('moneyChips').innerHTML = '';
-        }
-        
-        function resetFile() {
-            selectedFile = null;
-            pdfFileInput.value = '';
-            document.getElementById('uploadZone').style.display = '';
-            document.getElementById('fileSelected').classList.remove('show');
-            document.getElementById('btnScan').classList.add('hidden');
-            document.getElementById('scanResults').classList.remove('show');
-        }
-        
-        function formatBytes(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-        }
-        
-        async function scanPDF() {
-            if (!selectedFile) return;
-            const btn = document.getElementById('btnScan');
-            btn.textContent = '⏳ Scanning…';
-            btn.disabled = true;
-            const fd = new FormData();
-            fd.append('pdf', selectedFile);
-            try {
-                const res = await fetch('/scan', { method: 'POST', body: fd });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                const chips = document.getElementById('moneyChips');
-                chips.innerHTML = '';
-                if (data.money_values && data.money_values.length > 0) {
-                    data.money_values.forEach(val => {
-                        const chip = document.createElement('button');
-                        chip.className = 'money-chip';
-                        chip.textContent = val;
-                        chip.title = 'Click to use this value';
-                        chip.onclick = () => fillFindField(val);
-                        chips.appendChild(chip);
-                    });
-                    document.getElementById('scanResults').classList.add('show');
-                } else {
-                    chips.innerHTML = '<span style="color:var(--gray-400);font-size:13px">No money values detected. Enter text manually below.</span>';
-                    document.getElementById('scanResults').classList.add('show');
-                }
-            } catch (err) {
-                showStatus('error', '⚠️ Scan failed: ' + err.message);
-            } finally {
-                btn.textContent = '🔍 Auto-detect money values in this PDF';
-                btn.disabled = false;
-            }
-        }
-        
-        function fillFindField(value) {
-            const inputs = document.querySelectorAll('.find-input');
-            for (const input of inputs) {
-                if (!input.value.trim()) {
-                    input.value = value;
-                    input.focus();
-                    return;
-                }
-            }
-            addRow(value);
-        }
-        
-        function addRow(prefillFind = '') {
-            rowCounter++;
-            const id = rowCounter;
-            const list = document.getElementById('replacementsList');
-            const div = document.createElement('div');
-            div.className = 'row-wrap';
-            div.id = `row-${id}`;
-            div.innerHTML = `
-                <div class="row-fields">
-                    <div class="field-group">
-                        <div class="field-label">Find (exact text)</div>
-                        <input type="text" class="field-input find-field find-input" name="find[]" placeholder='e.g. $1,368.05' value="${escapeHtml(prefillFind)}" />
-                    </div>
-                    <div class="arrow-icon">→</div>
-                    <div class="field-group">
-                        <div class="field-label">Replace with</div>
-                        <input type="text" class="field-input replace-field" name="replace[]" placeholder='e.g. $2,450.00' />
-                    </div>
-                </div>
-                <button class="btn-remove" onclick="removeRow(${id})" title="Remove">×</button>
-            `;
-            list.appendChild(div);
-        }
-        
-        function removeRow(id) {
-            const el = document.getElementById(`row-${id}`);
-            if (el) el.remove();
-        }
-        
-        function escapeHtml(str) {
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-        
-        async function processPDF() {
-            if (!selectedFile) {
-                showStatus('error', '⚠️ Please upload a PDF first.');
-                return;
-            }
-            const finds = [...document.querySelectorAll('input[name="find[]"]')].map(i => i.value.trim());
-            const replaces = [...document.querySelectorAll('input[name="replace[]"]')].map(i => i.value.trim());
-            if (finds.every(f => !f)) {
-                showStatus('error', '⚠️ Please enter at least one value to find.');
-                return;
-            }
-            document.getElementById('spinnerOverlay').classList.add('show');
-            document.getElementById('btnProcess').disabled = true;
-            hideStatus();
-            const fd = new FormData();
-            fd.append('pdf', selectedFile);
-            finds.forEach(f => fd.append('find[]', f));
-            replaces.forEach(r => fd.append('replace[]', r));
-            try {
-                const res = await fetch('/process', { method: 'POST', body: fd });
-                if (res.ok) {
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    const disposition = res.headers.get('Content-Disposition') || '';
-                    const match = disposition.match(/filename="?([^"]+)"?/);
-                    a.download = match ? match[1] : 'edited.pdf';
-                    a.href = url;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    showStatus('success', '✅ PDF edited successfully! Check your downloads.');
-                } else {
-                    const data = await res.json();
-                    showStatus('error', '⚠️ ' + (data.error || 'Unknown error'));
-                }
-            } catch (err) {
-                showStatus('error', '⚠️ Network error: ' + err.message);
-            } finally {
-                document.getElementById('spinnerOverlay').classList.remove('show');
-                document.getElementById('btnProcess').disabled = false;
-            }
-        }
-        
-        function showStatus(type, msg) {
-            const box = document.getElementById('statusBox');
-            box.className = 'status-box show ' + type;
-            box.innerHTML = (type === 'loading' ? '<div class="spin"></div>' : '') + `<span>${msg}</span>`;
-        }
-        
-        function hideStatus() {
-            document.getElementById('statusBox').className = 'status-box';
-        }
-        
+        uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('drag-over'); const file = e.dataTransfer.files[0]; if (file && file.type === 'application/pdf') handleFile(file); });
+        function handleFile(file) { selectedFile = file; document.getElementById('uploadZone').style.display = 'none'; document.getElementById('fileSelected').classList.add('show'); document.getElementById('fileName').textContent = file.name; document.getElementById('fileSize').textContent = formatBytes(file.size); document.getElementById('btnScan').classList.remove('hidden'); document.getElementById('scanResults').classList.remove('show'); document.getElementById('moneyChips').innerHTML = ''; }
+        function resetFile() { selectedFile = null; pdfFileInput.value = ''; document.getElementById('uploadZone').style.display = ''; document.getElementById('fileSelected').classList.remove('show'); document.getElementById('btnScan').classList.add('hidden'); document.getElementById('scanResults').classList.remove('show'); }
+        function formatBytes(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1024 / 1024).toFixed(1) + ' MB'; }
+        async function scanPDF() { if (!selectedFile) return; const btn = document.getElementById('btnScan'); btn.textContent = '⏳ Scanning…'; btn.disabled = true; const fd = new FormData(); fd.append('pdf', selectedFile); try { const res = await fetch('/scan', { method: 'POST', body: fd }); const data = await res.json(); if (data.error) throw new Error(data.error); const chips = document.getElementById('moneyChips'); chips.innerHTML = ''; if (data.money_values && data.money_values.length > 0) { data.money_values.forEach(val => { const chip = document.createElement('button'); chip.className = 'money-chip'; chip.textContent = val; chip.onclick = () => fillFindField(val); chips.appendChild(chip); }); document.getElementById('scanResults').classList.add('show'); } else { chips.innerHTML = '<span style="color:var(--gray-400);font-size:13px">No money values detected.</span>'; document.getElementById('scanResults').classList.add('show'); } } catch (err) { showStatus('error', '⚠️ Scan failed: ' + err.message); } finally { btn.textContent = '🔍 Auto-detect money values in this PDF'; btn.disabled = false; } }
+        function fillFindField(value) { const inputs = document.querySelectorAll('.find-input'); for (const input of inputs) { if (!input.value.trim()) { input.value = value; input.focus(); return; } } addRow(value); }
+        function addRow(prefillFind = '') { rowCounter++; const id = rowCounter; const list = document.getElementById('replacementsList'); const div = document.createElement('div'); div.className = 'row-wrap'; div.id = `row-${id}`; div.innerHTML = `<div class="row-fields"><div class="field-group"><div class="field-label">Find (exact text)</div><input type="text" class="field-input find-field find-input" name="find[]" value="${escapeHtml(prefillFind)}" /></div><div class="arrow-icon">→</div><div class="field-group"><div class="field-label">Replace with</div><input type="text" class="field-input replace-field" name="replace[]" /></div></div><button class="btn-remove" onclick="removeRow(${id})" title="Remove">×</button>`; list.appendChild(div); }
+        function removeRow(id) { const el = document.getElementById(`row-${id}`); if (el) el.remove(); }
+        function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        async function processPDF() { if (!selectedFile) { showStatus('error', '⚠️ Please upload a PDF first.'); return; } const finds = [...document.querySelectorAll('input[name="find[]"]')].map(i => i.value.trim()); const replaces = [...document.querySelectorAll('input[name="replace[]"]')].map(i => i.value.trim()); if (finds.every(f => !f)) { showStatus('error', '⚠️ Please enter at least one value.'); return; } document.getElementById('spinnerOverlay').classList.add('show'); document.getElementById('btnProcess').disabled = true; hideStatus(); const fd = new FormData(); fd.append('pdf', selectedFile); finds.forEach(f => fd.append('find[]', f)); replaces.forEach(r => fd.append('replace[]', r)); try { const res = await fetch('/process', { method: 'POST', body: fd }); if (res.ok) { const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.download = 'edited.pdf'; a.href = url; a.click(); URL.revokeObjectURL(url); showStatus('success', '✅ PDF edited successfully!'); } else { const data = await res.json(); showStatus('error', '⚠️ ' + (data.error || 'Error')); } } catch (err) { showStatus('error', '⚠️ Network error'); } finally { document.getElementById('spinnerOverlay').classList.remove('show'); document.getElementById('btnProcess').disabled = false; } }
+        function showStatus(type, msg) { const box = document.getElementById('statusBox'); box.className = 'status-box show ' + type; box.innerHTML = `<span>${msg}</span>`; }
+        function hideStatus() { document.getElementById('statusBox').className = 'status-box'; }
         addRow();
     </script>
 </body>
@@ -417,14 +150,11 @@ HTML = """<!DOCTYPE html>
 """
 
 @app.route('/')
-def index():
-    return HTML
+def index(): return HTML
 
 @app.route('/scan', methods=['POST'])
 def scan_pdf():
-    if 'pdf' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
+    if 'pdf' not in request.files: return jsonify({'error': 'No file uploaded'}), 400
     pdf_bytes = request.files['pdf'].read()
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -432,60 +162,43 @@ def scan_pdf():
         money_pattern = re.compile(r'\$[\d,]+\.?\d*')
         for page in doc:
             for val in money_pattern.findall(page.get_text()):
-                if val not in money_values:
-                    money_values.append(val)
-        return jsonify({'money_values': money_values, 'pages': len(doc)})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+                if val not in money_values: money_values.append(val)
+        return jsonify({'money_values': money_values})
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 @app.route('/process', methods=['POST'])
 def process_pdf():
-    if 'pdf' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
-    
+    if 'pdf' not in request.files: return jsonify({'error': 'No file'}), 400
     pdf_file = request.files['pdf']
     finds = request.form.getlist('find[]')
     replaces = request.form.getlist('replace[]')
     
-    if not finds or all(f.strip() == '' for f in finds):
-        return jsonify({'error': 'No replacements specified'}), 400
-    
     try:
         doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        total = 0
-        
         for old_text, new_text in zip(finds, replaces):
-            old_text = old_text.strip()
-            new_text = new_text.strip()
-            if not old_text:
-                continue
+            old_text, new_text = old_text.strip(), new_text.strip()
+            if not old_text: continue
             
-            for page_num in range(len(doc)):
-                page = doc[page_num]
-                
-                # Buscar todas las instancias del texto
+            for page in doc:
                 text_instances = page.search_for(old_text)
-                
                 for inst in text_instances:
-                    # Usar add_redact_annot y apply_redactions que preservan el formato
-                    # Esto es la clave: las redacciones mantienen el formato original
-                    page.add_redact_annot(inst, text=new_text)
-                    total += 1
-                
-                # Aplicar todas las redacciones de esta página
-                if text_instances:
-                    page.apply_redactions()
-        
-        if total == 0:
-            return jsonify({'error': 'Text not found in PDF. Copy the exact text including $ sign.'}), 404
+                    # Captura de estilo original
+                    blocks = page.get_text("dict", clip=inst)["blocks"]
+                    font_name, font_size, color = "helv", 10, (0, 0, 0)
+                    if blocks and "lines" in blocks[0] and blocks[0]["lines"]:
+                        spans = blocks[0]["lines"][0].get("spans", [])
+                        if spans:
+                            font_name, font_size, color = spans[0].get("font"), spans[0].get("size"), spans[0].get("color")
+                    
+                    page.add_redact_annot(inst)
+                    page.insert_text(inst.tl, new_text, fontsize=font_size, fontname=font_name, color=color)
+                if text_instances: page.apply_redactions()
         
         output = io.BytesIO()
-        doc.save(output, deflate=True, garbage=4)
+        doc.save(output, deflate=True)
         output.seek(0)
-        name = pdf_file.filename.rsplit('.', 1)[0] + '_edited.pdf'
-        return send_file(output, mimetype='application/pdf', as_attachment=True, download_name=name)
-    except Exception as e:
-        return jsonify({'error': f'Error: {str(e)}'}), 500
+        return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="edited.pdf")
+    except Exception as e: return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
