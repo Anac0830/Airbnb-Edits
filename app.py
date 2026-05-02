@@ -182,23 +182,20 @@ def process_pdf():
             for page in doc:
                 text_instances = page.search_for(old_text)
                 for inst in text_instances:
-                    # Captura de estilo original
-                    blocks = page.get_text("dict", clip=inst)["blocks"]
-                    font_name, font_size, color = "helv", 10, (0, 0, 0)
-                    if blocks and "lines" in blocks[0] and blocks[0]["lines"]:
-                        spans = blocks[0]["lines"][0].get("spans", [])
-                        if spans:
-                            font_name, font_size, color = spans[0].get("font"), spans[0].get("size"), spans[0].get("color")
-                    
+                    # 1. Borramos el original con redacción
                     page.add_redact_annot(inst)
-                    page.insert_text(inst.tl, new_text, fontsize=font_size, fontname=font_name, color=color)
-                if text_instances: page.apply_redactions()
+                    page.apply_redactions()
+                    
+                    # 2. Insertamos el nuevo texto forzando la fuente en negrita
+                    page.insert_text(
+                        inst.tl, 
+                        new_text, 
+                        fontsize=11, 
+                        fontname="helv-bold", 
+                        color=(0, 0, 0)
+                    )
         
         output = io.BytesIO()
         doc.save(output, deflate=True)
         output.seek(0)
-        return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="edited.pdf")
-    except Exception as e: return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+        return send_file(output, mimetype='application/pdf', as_attachment=True, download_name="edited.pdf
