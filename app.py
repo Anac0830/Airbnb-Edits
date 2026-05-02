@@ -755,7 +755,7 @@ HTML = """<!DOCTYPE html>
         <div class="field-group" style="flex-shrink:0">
           <div class="field-label">Format</div>
           <label class="bold-toggle">
-            <input type="checkbox" name="bold[]" value="1" checked />
+            <input type="checkbox" name="bold[]" value="1" />
             <span>Bold</span>
           </label>
         </div>
@@ -870,9 +870,10 @@ def process_pdf():
             new_text = new_text.strip()
             if not old_text:
                 continue
-            is_bold = (bolds[i] == '1') if i < len(bolds) else False
-            # Usar Helvetica Light para negrita más ligera
-            fontname = 'helvl' if is_bold else 'helv'
+            # Usar siempre la fuente regular, sin negrita
+            # La opción de negrita se ignora para mantener un estilo más ligero
+            fontname = 'helv'  # Fuente regular Helvetica
+            
             for page in doc:
                 instances = page.search_for(old_text)
                 for inst in instances:
