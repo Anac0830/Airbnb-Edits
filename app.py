@@ -926,27 +926,28 @@ def process_pdf():
                         color=(1,1,1), fill=(1,1,1)
                     )
                     
+                    pos = (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8)
+                    
                     # Insertar texto según el formato seleccionado
                     if format_type == 'normal':
-                        # Texto normal
+                        # Texto normal con Arial
                         page.insert_text(
-                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
-                            new_text, fontname='helv', fontsize=font_size, color=text_color
+                            pos, new_text, fontname='arial', fontsize=font_size, color=text_color
                         )
                     elif format_type == 'semibold':
-                        # Semi-bold: mismo texto pero ligeramente más pequeño y más oscuro
-                        # y también lo dibujamos 2 veces con offset mínimo para simular negrita ligera
-                        pos = (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8)
-                        # Dibujar el texto ligeramente más pequeño (95% del tamaño)
-                        smaller_size = font_size * 0.95
+                        # Semi-bold: insertar el texto 2 veces con offset mínimo para darle grosor
+                        # pero con Arial normal, no bold
                         page.insert_text(
-                            pos, new_text, fontname='helv', fontsize=smaller_size, color=text_color
+                            pos, new_text, fontname='arial', fontsize=font_size, color=text_color
+                        )
+                        # Segundo renderizado con offset de 0.2 píxeles para simular semi-negrita
+                        page.insert_text(
+                            (pos[0] + 0.2, pos[1]), new_text, fontname='arial', fontsize=font_size, color=text_color
                         )
                     elif format_type == 'bold':
-                        # Bold completo
+                        # Bold completo con Arial Bold
                         page.insert_text(
-                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
-                            new_text, fontname='hebo', fontsize=font_size, color=text_color
+                            pos, new_text, fontname='arialbd', fontsize=font_size, color=text_color
                         )
                     
                     total += 1
