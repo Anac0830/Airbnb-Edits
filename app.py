@@ -539,7 +539,6 @@ HTML = """<!DOCTYPE html>
       border-color: var(--pink);
       color: white;
     }
-    .format-btn.semibold.active { background: var(--pink); }
     .format-btn.bold.active { background: var(--pink-dark); }
     .format-btn.normal.active { background: var(--gray-400); border-color: var(--gray-400); }
     .format-btn:hover:not(.active) {
@@ -768,11 +767,10 @@ HTML = """<!DOCTYPE html>
         <div class="field-group" style="flex-shrink:0">
           <div class="field-label">Format</div>
           <div class="format-buttons">
-            <button type="button" class="format-btn normal" data-format="normal" onclick="setFormat(this, 'normal')">Normal</button>
-            <button type="button" class="format-btn semibold active" data-format="semibold" onclick="setFormat(this, 'semibold')">Semi-bold</button>
+            <button type="button" class="format-btn normal active" data-format="normal" onclick="setFormat(this, 'normal')">Normal</button>
             <button type="button" class="format-btn bold" data-format="bold" onclick="setFormat(this, 'bold')">Bold</button>
           </div>
-          <input type="hidden" name="format[]" value="semibold" />
+          <input type="hidden" name="format[]" value="normal" />
         </div>
       </div>
       <button class="btn-remove" onclick="removeRow(${id})" title="Remove">×</button>
@@ -900,7 +898,7 @@ def process_pdf():
             if not old_text:
                 continue
             
-            format_type = formats[i] if i < len(formats) else 'semibold'
+            format_type = formats[i] if i < len(formats) else 'normal'
             
             for page in doc:
                 instances = page.search_for(old_text)
@@ -934,18 +932,8 @@ def process_pdf():
                         page.insert_text(
                             pos, new_text, fontname='arial', fontsize=font_size, color=text_color
                         )
-                    elif format_type == 'semibold':
-                        # Semi-bold: insertar el texto 2 veces con offset mínimo para darle grosor
-                        # pero con Arial normal, no bold
-                        page.insert_text(
-                            pos, new_text, fontname='arial', fontsize=font_size, color=text_color
-                        )
-                        # Segundo renderizado con offset de 0.2 píxeles para simular semi-negrita
-                        page.insert_text(
-                            (pos[0] + 0.2, pos[1]), new_text, fontname='arial', fontsize=font_size, color=text_color
-                        )
                     elif format_type == 'bold':
-                        # Bold completo con Arial Bold
+                        # Bold con Arial Bold
                         page.insert_text(
                             pos, new_text, fontname='arialbd', fontsize=font_size, color=text_color
                         )
