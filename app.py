@@ -463,75 +463,81 @@ def process_pdf():
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 
-                # Obtener todos los spans de la página
-                page_dict = page.get_text('dict')
+                # Buscar el texto en la página
+                text_instances = page.search_for(old_text)
                 
-                for block in page_dict.get('blocks', []):
-                    if block.get('type') != 0:  # Solo bloques de texto
-                        continue
+                for inst in text_instances:
+                    # Obtener el rectángulo donde está el texto
+                    rect = inst
                     
-                    for line in block.get('lines', []):
-                        for span in line.get('spans', []):
-                            span_text = span.get('text', '')
-                            
-                            # Si encontramos el texto exacto en el span
-                            if old_text in span_text:
-                                # Reemplazar el texto en el span
-                                new_span_text = span_text.replace(old_text, new_text)
-                                
-                                # Obtener las propiedades del span original
-                                bbox = fitz.Rect(span['bbox'])
-                                fontname = span['font']
-                                fontsize = span['size']
-                                color_int = span.get('color', 0)
-                                color_rgb = ((color_int >> 16) & 0xFF) / 255.0, ((color_int >> 8) & 0xFF) / 255.0, (color_int & 0xFF) / 255.0
-                                
-                                # Limpiar el nombre de la fuente - eliminar caracteres no permitidos
-                                # Reemplazar espacios, paréntesis y otros caracteres especiales
-                                clean_fontname = re.sub(r'[^\w\-]', '', fontname)
-                                
-                                # Si después de limpiar queda vacío, usar fuente por defecto
-                                if not clean_fontname:
-                                    # Detectar si es negrita por el nombre original
-                                    if 'bold' in fontname.lower() or 'black' in fontname.lower():
-                                        clean_fontname = 'hebo'  # fuente bold en PyMuPDF
-                                    else:
-                                        clean_fontname = 'helv'  # fuente regular
-                                
-                                # Para asegurar negrita, si el fontname original contiene 'bold' o 'black'
-                                if 'bold' in fontname.lower() or 'black' in fontname.lower():
-                                    # Asegurar que usamos una fuente bold
-                                    if 'helv' in clean_fontname.lower():
-                                        clean_fontname = 'hebo'
-                                    elif 'times' in clean_fontname.lower():
-                                        clean_fontname = 'tibo'
-                                    elif 'courier' in clean_fontname.lower():
-                                        clean_fontname = 'cobo'
-                                
-                                # Calcular el ancho aproximado para el rectángulo blanco
-                                char_width = fontsize * 0.5
-                                new_width = len(new_span_text) * char_width
-                                old_width = len(span_text) * char_width
-                                width_diff = max(0, new_width - old_width)
-                                
-                                # Dibujar rectángulo blanco para cubrir el texto original
-                                white_rect = fitz.Rect(
-                                    bbox.x0 - 1, 
-                                    bbox.y0 - 1, 
-                                    bbox.x1 + width_diff + 2, 
-                                    bbox.y1 + 1
-                                )
-                                page.draw_rect(white_rect, color=(1, 1, 1), fill=(1, 1, 1))
-                                
-                                # Insertar el nuevo texto con la fuente limpia
-                                page.insert_text(
-                                    (bbox.x0, bbox.y0 + (bbox.y1 - bbox.y0) * 0.75),
-                                    new_span_text,
-                                    fontname=clean_fontname,
-                                    fontsize=fontsize,
-                                    color=color_rgb
-                                )
-                                total += 1
+                    # Extraer información del span original para obtener el formato
+                    page_dict = page.get_text('dict')
+                    font_info = None
+                    
+                    for block in page_dict.get('blocks', []):
+                        if block.get('type') != 0:
+                            continue
+                        for line in block.get('lines', []):
+                            for span in line.get('spans', []):
+                                if old_text in span.get('text', ''):
+                                    font_info = span
+                                    break
+                            if font_info:
+                                break
+                        if font_info:
+                            break
+                    
+                    if font_info:
+                        # Usar el tamaño y color original
+                        fontsize = font_info.get('size', 12)
+                        color_int = font_info.get('color', 0)
+                        color_rgb = ((color_int >> 16) & 0xFF) / 255.0, ((color_int >> 8) & 0xFF) / 255.0, (color_int & 0xFF) / 255.0
+                        
+                        # Detectar si es negrita por el nombre de la fuente
+                        fontname = font_info.get('font', '').lower()
+                        is_bold = 'bold' in fontname or 'black' in fontname
+                        
+                        # Usar fuentes estándar de PyMuPDF
+                        # Referencia: https://pymupdf.readthedocs.io/en/latest/text.html#fonts
+                        if is_bold:
+                            # Fuentes en negrita
+                            if 'times' in fontname or 'roman' in fontname:
+                                font_to_use = 'tibo'  # Times Bold
+                            elif 'courier' in fontname:
+                                font_to_use = 'cobo'  # Courier Bold
+                            else:
+                                font_to_use = 'hebo'  # Helvetica Bold (default)
+                        else:
+                            # Fuentes normales
+                            if 'times' in fontname or 'roman' in fontname:
+                                font_to_use = 'tir'   # Times Roman
+                            elif 'courier' in fontname:
+                                font_to_use = 'cour'  # Courier
+                            else:
+                                font_to_use = 'helv'  # Helvetica (default)
+                        
+                        # Calcular el ancho del texto nuevo vs viejo
+                        approx_char_width = fontsize * 0.5
+                        width_diff = max(0, (len(new_text) - len(old_text)) * approx_char_width)
+                        
+                        # Dibujar rectángulo blanco para cubrir el texto original
+                        white_rect = fitz.Rect(
+                            rect.x0 - 1,
+                            rect.y0 - 1,
+                            rect.x1 + width_diff + 2,
+                            rect.y1 + 1
+                        )
+                        page.draw_rect(white_rect, color=(1, 1, 1), fill=(1, 1, 1))
+                        
+                        # Insertar el nuevo texto con el formato adecuado
+                        page.insert_text(
+                            (rect.x0, rect.y0 + (rect.y1 - rect.y0) * 0.75),
+                            new_text,
+                            fontname=font_to_use,
+                            fontsize=fontsize,
+                            color=color_rgb
+                        )
+                        total += 1
         
         if total == 0:
             return jsonify({'error': 'Text not found in PDF. Copy the exact text including $ sign.'}), 404
