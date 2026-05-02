@@ -928,14 +928,14 @@ def process_pdf():
                     
                     # Insertar texto según el formato seleccionado
                     if format_type == 'normal':
-                        # Texto normal con Arial
+                        # Texto normal con Helvetica
                         page.insert_text(
-                            pos, new_text, fontname='arial', fontsize=font_size, color=text_color
+                            pos, new_text, fontname='helv', fontsize=font_size, color=text_color
                         )
                     elif format_type == 'bold':
-                        # Bold con Arial Bold
+                        # Bold con Helvetica Bold
                         page.insert_text(
-                            pos, new_text, fontname='arialbd', fontsize=font_size, color=text_color
+                            pos, new_text, fontname='hebo', fontsize=font_size, color=text_color
                         )
                     
                     total += 1
