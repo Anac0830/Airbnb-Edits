@@ -871,7 +871,8 @@ def process_pdf():
             if not old_text:
                 continue
             is_bold = (bolds[i] == '1') if i < len(bolds) else False
-            fontname = 'hebo' if is_bold else 'helv'
+            # Usar Helvetica Light para negrita más ligera
+            fontname = 'helvl' if is_bold else 'helv'
             for page in doc:
                 instances = page.search_for(old_text)
                 for inst in instances:
