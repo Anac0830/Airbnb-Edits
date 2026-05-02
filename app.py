@@ -517,23 +517,36 @@ HTML = """<!DOCTYPE html>
       .row-fields { grid-template-columns: 1fr; }
       .arrow-icon { display: none; }
     }
-    .bold-toggle {
+    /* FORMAT BUTTONS */
+    .format-buttons {
       display: flex;
-      align-items: center;
       gap: 6px;
-      cursor: pointer;
-      padding: 9px 12px;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gray-600);
-      background: white;
-      user-select: none;
-      white-space: nowrap;
+      flex-shrink: 0;
     }
-    .bold-toggle input { accent-color: var(--pink); width:14px; height:14px; }
-    .bold-toggle span { font-weight: 700; }
+    .format-btn {
+      padding: 8px 12px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+      color: var(--gray-600);
+    }
+    .format-btn.active {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: white;
+    }
+    .format-btn.semibold.active { background: var(--pink); }
+    .format-btn.bold.active { background: var(--pink-dark); }
+    .format-btn.normal.active { background: var(--gray-400); border-color: var(--gray-400); }
+    .format-btn:hover:not(.active) {
+      background: var(--pink-light);
+      border-color: var(--pink);
+      color: var(--pink);
+    }
   </style>
 </head>
 <body>
@@ -754,16 +767,28 @@ HTML = """<!DOCTYPE html>
         </div>
         <div class="field-group" style="flex-shrink:0">
           <div class="field-label">Format</div>
-          <label class="bold-toggle">
-            <input type="checkbox" name="bold[]" value="1" />
-            <span>Bold</span>
-          </label>
+          <div class="format-buttons">
+            <button type="button" class="format-btn normal" data-format="normal" onclick="setFormat(this, 'normal')">Normal</button>
+            <button type="button" class="format-btn semibold active" data-format="semibold" onclick="setFormat(this, 'semibold')">Semi-bold</button>
+            <button type="button" class="format-btn bold" data-format="bold" onclick="setFormat(this, 'bold')">Bold</button>
+          </div>
+          <input type="hidden" name="format[]" value="semibold" />
         </div>
       </div>
       <button class="btn-remove" onclick="removeRow(${id})" title="Remove">×</button>
     `;
     list.appendChild(div);
   }
+  
+  function setFormat(btn, format) {
+    const formatDiv = btn.parentElement;
+    const buttons = formatDiv.querySelectorAll('.format-btn');
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const hiddenInput = formatDiv.parentElement.querySelector('input[name="format[]"]');
+    hiddenInput.value = format;
+  }
+  
   function removeRow(id) {
     const el = document.getElementById(`row-${id}`);
     if (el) el.remove();
@@ -779,6 +804,8 @@ HTML = """<!DOCTYPE html>
     }
     const finds = [...document.querySelectorAll('input[name="find[]"]')].map(i => i.value.trim());
     const replaces = [...document.querySelectorAll('input[name="replace[]"]')].map(i => i.value.trim());
+    const formats = [...document.querySelectorAll('input[name="format[]"]')].map(i => i.value);
+    
     if (finds.every(f => !f)) {
       showStatus('error', '⚠️ Please enter at least one value to find.');
       return;
@@ -790,8 +817,8 @@ HTML = """<!DOCTYPE html>
     fd.append('pdf', selectedFile);
     finds.forEach(f => fd.append('find[]', f));
     replaces.forEach(r => fd.append('replace[]', r));
-    const bolds = [...document.querySelectorAll('input[name="bold[]"]')].map(i => i.checked ? '1' : '0');
-    bolds.forEach(b => fd.append('bold[]', b));
+    formats.forEach(f => fd.append('format[]', f));
+    
     try {
       const res = await fetch('/process', { method: 'POST', body: fd });
       if (res.ok) {
@@ -859,24 +886,29 @@ def process_pdf():
     pdf_file = request.files['pdf']
     finds   = request.form.getlist('find[]')
     replaces = request.form.getlist('replace[]')
-    bolds   = request.form.getlist('bold[]')
+    formats = request.form.getlist('format[]')
+    
     if not finds or all(f.strip() == '' for f in finds):
         return jsonify({'error': 'No replacements specified'}), 400
     try:
         doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
         total = 0
+        
+        # Mapeo de formatos a fuentes
+        # Para semi-bold usamos la misma fuente regular pero con un pequeño ajuste
+        # Como no hay fuente semi-bold nativa, simulamos con un stroke delgado
         for i, (old_text, new_text) in enumerate(zip(finds, replaces)):
             old_text = old_text.strip()
             new_text = new_text.strip()
             if not old_text:
                 continue
-            # Usar siempre la fuente regular, sin negrita
-            # La opción de negrita se ignora para mantener un estilo más ligero
-            fontname = 'helv'  # Fuente regular Helvetica
+            
+            format_type = formats[i] if i < len(formats) else 'semibold'
             
             for page in doc:
                 instances = page.search_for(old_text)
                 for inst in instances:
+                    # Extraer el tamaño y color de fuente original
                     font_size = 12.0
                     text_color = (0, 0, 0)
                     for block in page.get_text('dict').get('blocks', []):
@@ -887,18 +919,42 @@ def process_pdf():
                                     font_size = span.get('size', 12.0)
                                     c = span.get('color', 0)
                                     text_color = (((c>>16)&0xFF)/255.0, ((c>>8)&0xFF)/255.0, (c&0xFF)/255.0)
+                    
+                    # Calcular espacio extra para texto más largo
                     extra = max(0, len(new_text) - len(old_text)) * font_size * 0.6
+                    
+                    # Borrar el texto original con un rectángulo blanco
                     page.draw_rect(
                         fitz.Rect(inst.x0-1, inst.y0-2, inst.x1+extra+5, inst.y1+2),
                         color=(1,1,1), fill=(1,1,1)
                     )
-                    page.insert_text(
-                        (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
-                        new_text, fontname=fontname, fontsize=font_size, color=text_color
-                    )
+                    
+                    # Insertar texto según el formato seleccionado
+                    if format_type == 'normal':
+                        # Texto normal
+                        page.insert_text(
+                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
+                            new_text, fontname='helv', fontsize=font_size, color=text_color
+                        )
+                    elif format_type == 'semibold':
+                        # Semi-bold: texto normal + stroke delgado para simular semi-negrita
+                        page.insert_text(
+                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
+                            new_text, fontname='helv', fontsize=font_size, color=text_color,
+                            stroke_width=0.3, stroke_color=text_color
+                        )
+                    elif format_type == 'bold':
+                        # Bold completo
+                        page.insert_text(
+                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
+                            new_text, fontname='hebo', fontsize=font_size, color=text_color
+                        )
+                    
                     total += 1
+        
         if total == 0:
             return jsonify({'error': 'Text not found in PDF. Copy the exact text including $ sign.'}), 404
+        
         output = io.BytesIO()
         doc.save(output, deflate=True, garbage=4)
         output.seek(0)
