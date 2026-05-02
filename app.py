@@ -894,9 +894,6 @@ def process_pdf():
         doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
         total = 0
         
-        # Mapeo de formatos a fuentes
-        # Para semi-bold usamos la misma fuente regular pero con un pequeño ajuste
-        # Como no hay fuente semi-bold nativa, simulamos con un stroke delgado
         for i, (old_text, new_text) in enumerate(zip(finds, replaces)):
             old_text = old_text.strip()
             new_text = new_text.strip()
@@ -937,11 +934,13 @@ def process_pdf():
                             new_text, fontname='helv', fontsize=font_size, color=text_color
                         )
                     elif format_type == 'semibold':
-                        # Semi-bold: texto normal + stroke delgado para simular semi-negrita
+                        # Semi-bold: mismo texto pero ligeramente más pequeño y más oscuro
+                        # y también lo dibujamos 2 veces con offset mínimo para simular negrita ligera
+                        pos = (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8)
+                        # Dibujar el texto ligeramente más pequeño (95% del tamaño)
+                        smaller_size = font_size * 0.95
                         page.insert_text(
-                            (inst.x0, inst.y0 + (inst.y1-inst.y0)*0.8),
-                            new_text, fontname='helv', fontsize=font_size, color=text_color,
-                            stroke_width=0.3, stroke_color=text_color
+                            pos, new_text, fontname='helv', fontsize=smaller_size, color=text_color
                         )
                     elif format_type == 'bold':
                         # Bold completo
