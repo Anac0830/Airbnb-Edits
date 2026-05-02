@@ -140,6 +140,7 @@ HTML = """<!DOCTYPE html>
             <h1>Edit <span>PDF values</span> without<br>breaking the layout</h1>
             <p>Upload any PDF, auto-detect money values, replace them precisely and download the edited file.</p>
         </div>
+
         <div class="card">
             <div class="card-header">
                 <div class="card-icon pink">📤</div>
@@ -172,6 +173,7 @@ HTML = """<!DOCTYPE html>
                 </div>
             </div>
         </div>
+
         <div class="card">
             <div class="card-header">
                 <div class="card-icon blue">🔄</div>
@@ -185,6 +187,7 @@ HTML = """<!DOCTYPE html>
                 <button class="btn-add-row" onclick="addRow()">+ Add another replacement</button>
             </div>
         </div>
+
         <div class="tips">
             <div class="tips-title">💡 Tips for best results</div>
             <ul>
@@ -194,6 +197,7 @@ HTML = """<!DOCTYPE html>
                 <li>The original layout, images and fonts are preserved. Only the target text changes.</li>
             </ul>
         </div>
+
         <div class="card" style="margin-top:20px">
             <div class="card-header">
                 <div class="card-icon green">⬇️</div>
@@ -213,6 +217,7 @@ HTML = """<!DOCTYPE html>
     <footer>
         PDF Value Editor · Preserves structure · Works with Airbnb, VRBO and more
     </footer>
+
     <div class="spinner-overlay" id="spinnerOverlay">
         <div class="spinner-box">
             <div class="big-spin"></div>
@@ -220,31 +225,32 @@ HTML = """<!DOCTYPE html>
             <small>This usually takes just a second</small>
         </div>
     </div>
+
     <script>
         let selectedFile = null;
         let rowCounter = 0;
-       
+        
         const uploadZone = document.getElementById('uploadZone');
         const pdfFileInput = document.getElementById('pdfFile');
-       
+        
         pdfFileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) handleFile(e.target.files[0]);
         });
-       
+        
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadZone.classList.add('drag-over');
         });
-       
+        
         uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-       
+        
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadZone.classList.remove('drag-over');
             const file = e.dataTransfer.files[0];
             if (file && file.type === 'application/pdf') handleFile(file);
         });
-       
+        
         function handleFile(file) {
             selectedFile = file;
             document.getElementById('uploadZone').style.display = 'none';
@@ -255,7 +261,7 @@ HTML = """<!DOCTYPE html>
             document.getElementById('scanResults').classList.remove('show');
             document.getElementById('moneyChips').innerHTML = '';
         }
-       
+        
         function resetFile() {
             selectedFile = null;
             pdfFileInput.value = '';
@@ -264,13 +270,13 @@ HTML = """<!DOCTYPE html>
             document.getElementById('btnScan').classList.add('hidden');
             document.getElementById('scanResults').classList.remove('show');
         }
-       
+        
         function formatBytes(bytes) {
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             return (bytes / 1024 / 1024).toFixed(1) + ' MB';
         }
-       
+        
         async function scanPDF() {
             if (!selectedFile) return;
             const btn = document.getElementById('btnScan');
@@ -305,7 +311,7 @@ HTML = """<!DOCTYPE html>
                 btn.disabled = false;
             }
         }
-       
+        
         function fillFindField(value) {
             const inputs = document.querySelectorAll('.find-input');
             for (const input of inputs) {
@@ -317,7 +323,7 @@ HTML = """<!DOCTYPE html>
             }
             addRow(value);
         }
-       
+        
         function addRow(prefillFind = '') {
             rowCounter++;
             const id = rowCounter;
@@ -341,16 +347,16 @@ HTML = """<!DOCTYPE html>
             `;
             list.appendChild(div);
         }
-       
+        
         function removeRow(id) {
             const el = document.getElementById(`row-${id}`);
             if (el) el.remove();
         }
-       
+        
         function escapeHtml(str) {
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
-       
+        
         async function processPDF() {
             if (!selectedFile) {
                 showStatus('error', '⚠️ Please upload a PDF first.');
@@ -393,17 +399,17 @@ HTML = """<!DOCTYPE html>
                 document.getElementById('btnProcess').disabled = false;
             }
         }
-       
+        
         function showStatus(type, msg) {
             const box = document.getElementById('statusBox');
             box.className = 'status-box show ' + type;
             box.innerHTML = (type === 'loading' ? '<div class="spin"></div>' : '') + `<span>${msg}</span>`;
         }
-       
+        
         function hideStatus() {
             document.getElementById('statusBox').className = 'status-box';
         }
-       
+        
         addRow();
     </script>
 </body>
@@ -418,7 +424,7 @@ def index():
 def scan_pdf():
     if 'pdf' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
-   
+    
     pdf_bytes = request.files['pdf'].read()
     try:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -436,94 +442,74 @@ def scan_pdf():
 def process_pdf():
     if 'pdf' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
-   
+    
     pdf_file = request.files['pdf']
     finds = request.form.getlist('find[]')
     replaces = request.form.getlist('replace[]')
-   
+    
     if not finds or all(f.strip() == '' for f in finds):
         return jsonify({'error': 'No replacements specified'}), 400
-   
+    
     try:
         doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
         total = 0
-       
+        
         for old_text, new_text in zip(finds, replaces):
             old_text = old_text.strip()
             new_text = new_text.strip()
             if not old_text:
                 continue
-           
-            for page in doc:
-                instances = page.search_for(old_text)
-                for inst in instances:
-                    # === MEJORA EN DETECCIÓN DE FORMATO ===
-                    font_name = "helv"
-                    font_size = 12.0
-                    text_color = (0, 0, 0)
-                    is_bold = False
-
-                    # Buscar el span que contiene el texto original
-                    text_dict = page.get_text("dict")
-                    for block in text_dict.get('blocks', []):
-                        if block.get('type') != 0:
-                            continue
-                        for line in block.get('lines', []):
-                            for span in line.get('spans', []):
-                                span_text = span.get('text', '')
-                                if old_text in span_text or span_text.strip() == old_text.strip():
-                                    font_size = span.get('size', 12.0)
-                                    color_int = span.get('color', 0)
-                                    text_color = (
-                                        ((color_int >> 16) & 0xFF) / 255.0,
-                                        ((color_int >> 8) & 0xFF) / 255.0,
-                                        (color_int & 0xFF) / 255.0
-                                    )
-                                    
-                                    # Mejor detección de negrita
-                                    fontname = span.get('font', '').lower()
-                                    if any(x in fontname for x in ['bold', 'black', 'heavy', 'semibold', '700', '600']):
-                                        is_bold = True
-                                    
-                                    flags = span.get('flags', 0)
-                                    if flags & 4:   # Bold flag en PyMuPDF
-                                        is_bold = True
-                                    
-                                    font_name = "hebo" if is_bold else "helv"
-                                    break
-                            if is_bold: break
-                        if is_bold: break
+            
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                
+                # Obtener todos los spans de la página
+                page_dict = page.get_text('dict')
+                
+                for block in page_dict.get('blocks', []):
+                    if block.get('type') != 0:  # Solo bloques de texto
+                        continue
                     
-                    # Espacio extra si el nuevo texto es más largo
-                    extra = max(0, len(new_text) - len(old_text)) * font_size * 0.65
-                    
-                    # Cubrir texto original
-                    page.draw_rect(
-                        fitz.Rect(inst.x0-1, inst.y0-2, inst.x1 + extra + 6, inst.y1+2),
-                        color=(1,1,1), fill=(1,1,1)
-                    )
-                    
-                    # Insertar nuevo texto con formato original
-                    page.insert_text(
-                        fitz.Point(inst.x0, inst.y0 + (inst.y1 - inst.y0) * 0.82),
-                        new_text,
-                        fontname=font_name,
-                        fontsize=font_size,
-                        color=text_color,
-                        render_mode=0
-                    )
-                    total += 1
-       
+                    for line in block.get('lines', []):
+                        for span in line.get('spans', []):
+                            span_text = span.get('text', '')
+                            
+                            # Si encontramos el texto exacto en el span
+                            if old_text in span_text:
+                                # Reemplazar el texto en el span
+                                new_span_text = span_text.replace(old_text, new_text)
+                                
+                                # Obtener las propiedades del span original
+                                bbox = fitz.Rect(span['bbox'])
+                                fontname = span['font']
+                                fontsize = span['size']
+                                color_int = span.get('color', 0)
+                                color_rgb = ((color_int >> 16) & 0xFF) / 255.0, ((color_int >> 8) & 0xFF) / 255.0, (color_int & 0xFF) / 255.0
+                                
+                                # Dibujar rectángulo blanco para cubrir el texto original
+                                white_rect = fitz.Rect(bbox.x0 - 1, bbox.y0 - 1, 
+                                                      bbox.x1 + (len(new_text) - len(old_text)) * fontsize * 0.5 + 2, 
+                                                      bbox.y1 + 1)
+                                page.draw_rect(white_rect, color=(1, 1, 1), fill=(1, 1, 1))
+                                
+                                # Insertar el nuevo texto con EXACTAMENTE las mismas propiedades
+                                page.insert_text(
+                                    (bbox.x0, bbox.y0 + (bbox.y1 - bbox.y0) * 0.75),
+                                    new_span_text,
+                                    fontname=fontname,
+                                    fontsize=fontsize,
+                                    color=color_rgb
+                                )
+                                total += 1
+        
         if total == 0:
             return jsonify({'error': 'Text not found in PDF. Copy the exact text including $ sign.'}), 404
-       
-        output = io.BytesIO()
-        doc.save(output, deflate=True, garbage=4, clean=True)
-        output.seek(0)
         
+        output = io.BytesIO()
+        doc.save(output, deflate=True, garbage=4)
+        output.seek(0)
         name = pdf_file.filename.rsplit('.', 1)[0] + '_edited.pdf'
         return send_file(output, mimetype='application/pdf', as_attachment=True, download_name=name)
-    
     except Exception as e:
         return jsonify({'error': f'Error: {str(e)}'}), 500
 
